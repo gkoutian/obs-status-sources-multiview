@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS Status Source - Streaming Dark</title>
+</head>
+<script>
+    /* add your configuration here */
+    const obsPort = 4455; //obs websocket port
+    const obsPassword = ''; //obs websocket password
+    const timeUpdate = 1000;  //time in milisecond of the data update
+</script>
+<style>
+    * {
+        font-family: "Montserrat", Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    #base {
+        background-color: #1c1c1c;
+        display: block;
+        height: 100vh;
+        width: 100vw;
+        box-sizing: border-box;
+    }
+
+    body.light #base {
+        background-color: #fff;
+    }
+
+    #top-section {
+        align-items: center;
+        background-color: #92908F;
+        background: radial-gradient(ellipse at center,  #92908F 0%,#585757 100%);
+        color: white;
+        display: flex;
+        flex-direction: row;
+        font-size: 10vh;
+        font-weight: 700;
+        gap: 3vw;
+        height: 24vh;
+        justify-content: center;
+        text-transform: uppercase;
+        width: 100%;
+    }
+
+    #top-section.red {
+        background-color: #E34D34;
+        background: radial-gradient(ellipse at center,  #e34d34 0%,#a32725 100%);
+    }
+
+    #top-section.gold {
+        background-color: #E3B234;
+        background: radial-gradient(ellipse at center,  #E3B234 0%,#ad762a 100%);
+    }
+
+    #top-section.blue {
+        background-color: #0A8FEF;
+        background: radial-gradient(ellipse at center,  #0A8FEF 0%,#1e36a5 100%);
+    }
+
+    #top-section.purple {
+        background-color: #8044E1;
+        background: radial-gradient(ellipse at center,  #8044E1 0%,#45218b 100%);
+    }
+
+    #top-section.green {
+        background-color: #66B54A;
+        background: radial-gradient(ellipse at center,  #66B54A 0%,#2f641b 100%);
+    }
+
+    #middle-section {
+        align-items: center;
+        box-sizing: border-box;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        font-size: 24vh;
+        font-weight: 600;
+        height: 44vh;
+        justify-content: center;
+        letter-spacing: 10px;
+        padding: 80px;
+        width: 100%;
+    }
+
+    #button-reload {
+        background-color: rgb(68, 63, 68);
+        border: none;
+        padding: 2vh 4vh;
+        font-size: 4vh;
+        border-radius: 1vh;
+        transition: all 0.3s;
+    }
+
+    #button-reload:hover {
+        background-color: rgb(189, 185, 189);
+        cursor: pointer;
+    }
+
+    #middle-section #mini-text{
+        font-size: 9vh !important;
+        text-align: center;
+    }
+
+    #bottom-section {
+        align-items: center;
+        box-sizing: border-box;
+        color: white;
+        display: flex;
+        flex-direction: row;
+        font-size: 7vw;
+        font-weight: 600;
+        gap: 5vw;
+        height: 32vh;
+        justify-content: space-between;
+        text-transform: none;
+        width: 100%;
+    }
+
+    #bottom-section .super-text {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        font-size: 4vw;
+        font-weight: 500;
+        gap: 2vw;
+    }
+
+    #bottom-left-section, #bottom-right-section {
+        background-color: #232121;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
+        padding: 3vh 2vw;
+        min-width: 42vw;
+        width: 48vw;
+    }
+
+    #bottom-left-section-hidden {
+        box-sizing: border-box;
+        flex-direction: column;
+        gap: 2vw;
+        height: 100%;
+        justify-content: center;
+        padding: 3vh 2vw;
+        width: 50%;
+    }
+
+    #bottom-left-section {
+        border-top-right-radius: 10vh;
+        background: linear-gradient(45deg, #2c2a2a 0%,#232121 60%);
+    }
+
+    #bottom-right-section {
+        align-items: end;
+        border-top-left-radius: 10vh;
+        background: linear-gradient(135deg, #232121 40%,#2c2a2a 100%);
+    }
+
+</style>
+<body>
+    <div id="base" >
+        <div id="top-section" >
+            <!-- Status icons -->
+            <svg id="icon-reconnect" class="top-icon" style="display: none" width="12vh" height="12vh" viewBox="0 0 187 187" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M35.1637 151.836C54.7364 170.474 78.0413 163.017 87.3679 155.467C92.1831 151.564 94.357 149.039 96.2192 147.169C102.741 141.115 102.328 135.053 98.0892 130.207C96.3828 128.266 85.4979 117.81 75.057 107.089C69.6496 101.681 65.9252 97.8634 62.7306 94.7779C58.4686 90.5236 54.7364 85.646 49.142 85.7863C44.015 85.7863 40.2906 90.3055 35.6234 94.9727C30.2628 100.333 26.3046 107.089 24.9099 113.151C20.7102 130.861 27.2396 143.445 35.1637 151.836ZM35.1637 151.836L15.5833 171.409M151.836 35.1794C132.256 16.5262 109.029 24.1152 99.7099 31.6732C94.879 35.5846 92.713 38.1091 90.843 39.9791C84.3213 46.041 84.7343 52.1029 88.9808 56.9493C89.5885 57.6506 91.3962 59.4427 93.9285 61.9672M151.836 35.1794C159.76 43.571 166.375 56.2948 162.176 74.0209C160.773 80.0828 156.815 86.8382 151.454 92.2066C146.795 96.866 143.063 101.393 137.936 101.393C132.341 101.533 129.443 97.4816 125.165 93.2273M151.836 35.1794L171.417 15.5834M93.9285 61.9672C98.4554 66.4474 105.328 73.2028 112.013 80.075C117.42 85.4824 121.971 90.1418 125.165 93.2195L112.995 105.094M93.9285 61.9672L81.9059 74.0598" stroke="white" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg id="icon-stream" class="top-icon" style="display: none" width="14vh" height="14vh" viewBox="0 0 191 191" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M95.4999 62.6719C89.0071 62.6719 82.6601 64.5972 77.2616 68.2044C71.863 71.8116 67.6553 76.9387 65.1707 82.9372C62.686 88.9358 62.0359 95.5364 63.3025 101.904C64.5692 108.272 67.6958 114.122 72.2869 118.713C76.878 123.304 82.7274 126.431 89.0954 127.697C95.4635 128.964 102.064 128.314 108.063 125.829C114.061 123.345 119.188 119.137 122.795 113.738C126.403 108.34 128.328 101.993 128.328 95.5C128.318 86.7965 124.856 78.4522 118.702 72.2979C112.548 66.1436 104.203 62.6818 95.4999 62.6719ZM95.4999 110.422C92.5486 110.422 89.6636 109.547 87.2097 107.907C84.7558 106.267 82.8433 103.937 81.7139 101.21C80.5845 98.4837 80.289 95.4835 80.8647 92.5889C81.4405 89.6943 82.8617 87.0355 84.9485 84.9487C87.0354 82.8618 89.6942 81.4406 92.5888 80.8649C95.4833 80.2891 98.4836 80.5846 101.21 81.714C103.937 82.8434 106.267 84.756 107.907 87.2099C109.547 89.6637 110.422 92.5487 110.422 95.5C110.422 99.4575 108.85 103.253 106.051 106.051C103.253 108.85 99.4574 110.422 95.4999 110.422ZM153.24 119.897C150.548 126.26 146.822 132.134 142.213 137.281C140.63 139.051 138.409 140.12 136.038 140.252C133.667 140.384 131.34 139.569 129.57 137.986C127.8 136.403 126.732 134.182 126.599 131.811C126.467 129.44 127.282 127.114 128.865 125.344C136.218 117.142 140.285 106.515 140.285 95.5C140.285 84.4849 136.218 73.8576 128.865 65.6563C128.081 64.7798 127.478 63.7576 127.089 62.648C126.7 61.5383 126.534 60.3629 126.599 59.189C126.665 58.015 126.961 56.8654 127.471 55.8059C127.98 54.7463 128.694 53.7975 129.57 53.0137C131.34 51.4307 133.667 50.6156 136.038 50.7479C137.212 50.8133 138.361 51.1094 139.421 51.6191C140.48 52.1289 141.429 52.8423 142.213 53.7188C150.128 62.5739 155.366 73.4943 157.318 85.2098C159.27 96.9252 157.856 108.954 153.24 119.897ZM62.1346 125.344C63.7176 127.114 64.5326 129.44 64.4004 131.811C64.2682 134.182 63.1995 136.403 61.4295 137.986C59.6595 139.569 57.3332 140.384 54.9622 140.252C52.5913 140.12 50.37 139.051 48.787 137.281C38.5005 125.795 32.8126 110.919 32.8126 95.5C32.8126 80.0813 38.5005 65.2046 48.787 53.7188C50.37 51.9488 52.5913 50.8801 54.9622 50.7479C57.3332 50.6156 59.6595 51.4307 61.4295 53.0137C63.1995 54.5967 64.2682 56.818 64.4004 59.189C64.5326 61.5599 63.7176 63.8863 62.1346 65.6563C54.7814 73.8576 50.7148 84.4849 50.7148 95.5C50.7148 106.515 54.7814 117.142 62.1346 125.344ZM188.016 95.5C188.044 119.715 178.55 142.97 161.581 160.246C160.771 161.132 159.79 161.846 158.697 162.345C157.605 162.844 156.423 163.118 155.222 163.151C154.022 163.184 152.827 162.975 151.708 162.537C150.59 162.098 149.572 161.439 148.713 160.599C147.855 159.759 147.175 158.755 146.713 157.646C146.251 156.537 146.016 155.347 146.024 154.146C146.031 152.945 146.28 151.758 146.756 150.655C147.232 149.552 147.925 148.556 148.793 147.727C162.485 133.791 170.157 115.036 170.157 95.5C170.157 75.9638 162.485 57.2089 148.793 43.2734C147.131 41.5776 146.211 39.291 146.235 36.9166C146.258 34.5421 147.224 32.2744 148.92 30.6122C150.616 28.9501 152.903 28.0296 155.277 28.0534C157.652 28.0772 159.919 29.0433 161.581 30.7391C178.554 48.0183 188.048 71.2797 188.016 95.5ZM42.2064 147.727C43.8686 149.422 44.789 151.709 44.7652 154.083C44.7414 156.458 43.7754 158.726 42.0796 160.388C40.3838 162.05 38.0971 162.97 35.7227 162.947C33.3483 162.923 31.0805 161.957 29.4184 160.261C12.4565 142.979 2.95386 119.73 2.95386 95.5149C2.95386 71.2996 12.4565 48.0512 29.4184 30.7689C31.1035 29.2032 33.3266 28.3462 35.6267 28.3755C37.9267 28.4049 40.1272 29.3184 41.7719 30.9266C43.4165 32.5347 44.3791 34.7142 44.46 37.013C44.5409 39.3119 43.7339 41.5536 42.2064 43.2734C28.5147 57.2089 20.8429 75.9638 20.8429 95.5C20.8429 115.036 28.5147 133.791 42.2064 147.727Z" fill="white"/>
+            </svg>
+            <svg id="icon-circle" class="top-icon" style="display: none" width="13vh" height="13vh" viewBox="0 0 191 191" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="95.5" cy="95.5" r="26.5" stroke="white" stroke-width="20"/>
+            </svg>
+            <!-- End Status icons -->
+
+            <p id="top-text">no connection</p>
+        </div>
+
+        <div id="middle-section">
+            <p id="clock-text" style="display: none;">12:07:08</p>
+            <p id="mini-text">Check OBS Websocket</p>
+            <button id="button-reload" onclick="reload()">Reload</button>
+        </div>
+
+        <div id="bottom-section" style="display: none;" >
+            <div id="bottom-left-section">
+                <div class="super-text">
+                    <svg id="icon-frames" width="5vw" height="5vw" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path id="icon-frames-path" d="M24.9998 12.5C23.802 12.507 22.6205 12.7787 21.54 13.2957C20.4595 13.8127 19.5067 14.5623 18.7498 15.4906L5.14041 31.8656C3.84455 33.4515 3.13486 35.4356 3.13088 37.4836C3.12689 39.5316 3.82886 41.5184 5.11853 43.1094L18.7685 59.5344C20.3279 61.4094 22.5935 62.5 24.9998 62.5C26.1976 62.493 27.379 62.2213 28.4595 61.7043C29.54 61.1873 30.4929 60.4377 31.2498 59.5094L44.8592 43.1344C46.155 41.5485 46.8647 39.5644 46.8687 37.5164C46.8727 35.4684 46.1707 33.4816 44.881 31.8906L31.231 15.4656C30.4737 14.5443 29.5228 13.8009 28.4459 13.2884C27.369 12.7758 26.1924 12.5067 24.9998 12.5ZM51.1935 13.1688C51.7915 12.6987 52.5403 12.4629 53.2997 12.5055C54.0591 12.548 54.7769 12.8661 55.3185 13.4L55.581 13.6937L69.881 31.8906C72.406 34.9937 72.531 39.3781 70.2873 42.575L69.9123 43.0687L55.581 61.3063C55.09 61.9312 54.3793 62.3455 53.5936 62.465C52.8079 62.5845 52.0061 62.4001 51.3515 61.9494C50.697 61.4987 50.2387 60.8155 50.07 60.0388C49.9013 59.2622 50.0349 58.4504 50.4435 57.7687L50.6685 57.4437L65.031 39.1625C65.376 38.7357 65.5794 38.2121 65.613 37.6643C65.6466 37.1166 65.5087 36.572 65.2185 36.1062L64.9998 35.7938L50.6685 17.5563C50.1564 16.9048 49.9241 16.0766 50.0225 15.2538C50.121 14.431 50.5422 13.681 51.1935 13.1688Z" fill="white"/>
+                        <path id="icon-frames-path2" d="M38.6938 13.1687C39.2917 12.6987 40.0405 12.4628 40.7999 12.5054C41.5593 12.548 42.2771 12.866 42.8188 13.3999L43.0813 13.6937L57.3813 31.8906C59.9063 34.9937 60.0313 39.3781 57.7875 42.5749L57.4125 43.0687L43.0813 61.3062C42.5902 61.9311 41.8795 62.3455 41.0938 62.465C40.3081 62.5844 39.5064 62.4 38.8518 61.9493C38.1972 61.4986 37.7389 60.8154 37.5702 60.0387C37.4015 59.2621 37.5351 58.4503 37.9438 57.7687L38.1688 57.4437L52.5313 39.1624C52.8762 38.7356 53.0796 38.212 53.1132 37.6643C53.1468 37.1165 53.0089 36.5719 52.7188 36.1062L52.5 35.7937L38.1688 17.5562C37.6567 16.9047 37.4243 16.0765 37.5228 15.2537C37.6212 14.4309 38.0424 13.681 38.6938 13.1687Z" fill="white"/>
+                    </svg>
+                    <p id="bottom-left-super-text">Frames dropped</p>
+                </div>
+                <p id="bottom-left-text">40.080 (48%)</p>
+            </div>
+
+            <div id="bottom-right-section">
+                <div class="super-text">
+                    <p id="bottom-right-super-text">Bitrate</p>
+                    <svg id="icon-gauge" width="4vw" height="4vw" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path id="icon-gauge-path" d="M63.6874 26.7813L59.8437 32.5625C61.6973 36.2596 62.6049 40.3589 62.4849 44.4929C62.3649 48.6269 61.2212 52.6666 59.1562 56.25H15.8437C13.1598 51.5941 12.0477 46.1973 12.6722 40.8596C13.2968 35.5219 15.6246 30.5276 19.3108 26.617C22.997 22.7064 27.8451 20.0876 33.1366 19.1491C38.4281 18.2105 43.8812 19.002 48.6874 21.4063L54.4687 17.5625C48.5827 13.7882 41.6009 12.0969 34.6402 12.7592C27.6795 13.4215 21.1419 16.3991 16.0733 21.2157C11.0047 26.0323 7.69793 32.4096 6.68186 39.3276C5.66578 46.2455 6.99915 53.3044 10.4687 59.375C11.014 60.3196 11.7971 61.1051 12.74 61.6533C13.683 62.2015 14.753 62.4934 15.8437 62.5H59.1249C60.2262 62.5044 61.3092 62.2177 62.264 61.6689C63.2189 61.1201 64.0118 60.3288 64.5624 59.375C67.4417 54.3873 68.8867 48.7009 68.7378 42.9436C68.5889 37.1864 66.8519 31.5823 63.7187 26.75L63.6874 26.7813ZM33.0937 48.1563C33.6741 48.7374 34.3634 49.1984 35.1222 49.5129C35.8809 49.8274 36.6942 49.9893 37.5156 49.9893C38.3369 49.9893 39.1502 49.8274 39.9089 49.5129C40.6677 49.1984 41.357 48.7374 41.9374 48.1563L59.6249 21.625L33.0937 39.3125C32.5126 39.893 32.0516 40.5823 31.7371 41.341C31.4225 42.0997 31.2606 42.913 31.2606 43.7344C31.2606 44.5557 31.4225 45.369 31.7371 46.1278C32.0516 46.8865 32.5126 47.5758 33.0937 48.1563Z" fill="white"/>
+                    </svg>
+
+                </div>
+                <p id="bottom-right-text">kb/s 697</p>
+            </div>
+
+        </div>
+    </div>
+</body>
+<script src="./obs-websocket-js.js"></script>
+<script>
+    const obs = new OBSWebSocket();
+    let connected = false;
+
+    //page components
+    const topSection = document.getElementById('top-section');
+    const iconReconnect = document.getElementById('icon-reconnect');
+    const iconStream = document.getElementById('icon-stream');
+    const iconCircle = document.getElementById('icon-circle');
+    const topText = document.getElementById('top-text');
+    const miniText = document.getElementById('mini-text');
+    const buttonReload = document.getElementById('button-reload');
+    const clockText = document.getElementById('clock-text');
+    const leftText = document.getElementById('bottom-left-text');
+    const rightText = document.getElementById('bottom-right-text');
+    const bottomSection = document.getElementById('bottom-section');
+
+    const reload = function () {
+        location.reload();
+    }
+
+    const clearDisplay = function () {
+        bottomSection.style.display = 'none';
+        topSection.className = '';
+        iconReconnect.style.display = 'none';
+        iconCircle.style.display = 'none';
+        iconCpu.style.display = 'none';
+        topText.innerHTML = 'no connection'
+        miniText.style.display = 'block';
+        clockText.style.display = 'none';
+        buttonReload.style.display = 'block';
+    };
+
+    const connectToWebsocket = function () {
+        (async () => {
+        try {
+            const {
+                obsWebSocketVersion,
+                negotiatedRpcVersion
+            } = await obs.connect('ws://127.0.0.1:' + obsPort, obsPassword, { eventSubscriptions: OBSWebSocket.EventSubscription.All | OBSWebSocket.EventSubscription.InputVolumeMeters });
+            connected = true;
+            console.log(`Connected to server ${obsWebSocketVersion} (using RPC ${negotiatedRpcVersion})`);
+        } catch (error) {
+            console.error('Failed to connect', error.code, error.message);
+        }
+
+        if (connected) {
+            const intervalChecks = setInterval(async () => {
+                buttonReload.style.display = 'none';
+                iconCircle.style.display = 'block';
+                topText.innerText = 'no stream';
+                miniText.style.display = 'none';
+                clockText.style.display = 'block';
+                clockText.innerHTML = '';
+                try {
+                    const streamStatus = await obs.call('GetStreamStatus');
+                    console.log(streamStatus);
+                    if (streamStatus.outputActive) {
+                        bottomSection.style.display = 'flex';
+                        iconCircle.style.display = 'none';
+                        if (streamStatus.outputReconnecting) {
+                            topSection.className = 'purple';
+                            iconReconnect.style.display = 'block';
+                            iconStream.style.display = 'none';
+                            topText.innerText = 'reconnecting';
+                        } else {
+                            topSection.className = 'blue';
+                            iconReconnect.style.display = 'none';
+                            iconStream.style.display = 'block';
+                            topText.innerText = 'streaming';
+                        }
+                        clockText.innerHTML = streamStatus.outputTimecode.split('.')[0];
+                        let mbsRecord = Math.round(streamStatus.outputBytes * 0.0001) / 100;
+                        rightText.innerHTML = mbsRecord + ' MBs';
+                        let dropFramesPercent = Math.round((streamStatus.outputSkippedFrames * 100) / streamStatus.outputTotalFrames);
+                        leftText.innerHTML = streamStatus.outputSkippedFrames + ' (' + dropFramesPercent + '%)';
+                    } else {
+                        iconReconnect.style.display = 'none';
+                        iconStream.style.display = 'none';
+                        iconCircle.style.display = 'block';
+                        topText.innerText = 'no stream';
+                        topSection.className = '';
+                    }
+                } catch(error) {
+                    clearDisplay();
+                    console.error('Failed to connect', error.code, error.message)
+                    clearInterval(intervalChecks);
+                }
+            }, timeUpdate);
+        }
+
+    })()
+    }
+
+    connectToWebsocket();
+
+</script>
+</html>

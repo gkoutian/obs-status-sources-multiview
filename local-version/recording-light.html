@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS Status Source - Recording Light</title>
+</head>
+<script>
+    /* add your configuration here */
+    const obsPort = 4455; //obs websocket port
+    const obsPassword = ''; //obs websocket password
+    const timeUpdate = 1000;  //time in milisecond of the data update
+</script>
+<style>
+    * {
+        font-family: "Montserrat", Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    #base {
+        background-color: #fff;
+        display: block;
+        height: 100vh;
+        width: 100vw;
+        box-sizing: border-box;
+    }
+
+    #top-section {
+        align-items: center;
+        background-color: #92908F;
+        background: radial-gradient(ellipse at center,  #92908F 0%,#585757 100%);
+        color: white;
+        display: flex;
+        flex-direction: row;
+        font-size: 10vh;
+        font-weight: 700;
+        gap: 3vw;
+        height: 24vh;
+        justify-content: center;
+        text-transform: uppercase;
+        width: 100%;
+    }
+
+    #top-section.red {
+        background-color: #E34D34;
+        background: radial-gradient(ellipse at center,  #e34d34 0%,#a32725 100%);
+    }
+
+    #top-section.gold {
+        background-color: #E3B234;
+        background: radial-gradient(ellipse at center,  #E3B234 0%,#ad762a 100%);
+    }
+
+    #middle-section {
+        align-items: center;
+        box-sizing: border-box;
+        color: #3B4151;
+        display: flex;
+        flex-direction: column;
+        font-size: 24vh;
+        font-weight: 600;
+        height: 44vh;
+        justify-content: center;
+        letter-spacing: 10px;
+        padding: 80px;
+        width: 100%;
+    }
+
+    #button-reload {
+        background-color: rgb(68, 63, 68);
+        border: none;
+        padding: 2vh 4vh;
+        font-size: 4vh;
+        border-radius: 1vh;
+        transition: all 0.3s;
+    }
+
+    #button-reload:hover {
+        background-color: rgb(189, 185, 189);
+        cursor: pointer;
+    }
+
+    #middle-section #mini-text{
+        font-size: 9vh !important;
+        text-align: center;
+    }
+
+    #bottom-section {
+        align-items: center;
+        box-sizing: border-box;
+        color: white;
+        display: flex;
+        flex-direction: row;
+        font-size: 7vw;
+        font-weight: 600;
+        gap: 5vw;
+        height: 32vh;
+        justify-content: space-between;
+        text-transform: none;
+        width: 100%;
+    }
+
+    #bottom-section .super-text {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        font-size: 4vw;
+        font-weight: 500;
+        gap: 2vw;
+    }
+
+    #bottom-left-section, #bottom-right-section {
+        background-color: #232121;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
+        padding: 3vh 2vw;
+        min-width: 42vw;
+        width: 48vw;
+        color: #3B4151;
+    }
+
+    #bottom-left-section-hidden {
+        box-sizing: border-box;
+        flex-direction: column;
+        gap: 2vw;
+        height: 100%;
+        justify-content: center;
+        padding: 3vh 2vw;
+        width: 50%;
+    }
+
+    #bottom-left-section {
+        border-top-right-radius: 10vh;
+        background: linear-gradient(45deg, #bebdbd 0%,#dbdbdb 60%);
+    }
+
+    #bottom-right-section {
+        align-items: end;
+        border-top-left-radius: 10vh;
+        background: linear-gradient(135deg, #dbdbdb 40%,#bebdbd 100%);
+    }
+</style>
+<body>
+    <div id="base" >
+        <div id="top-section" >
+            <!-- Status icons -->
+            <svg id="icon-recording" class="top-icon" style="display: none" width="11vh" height="11vh" viewBox="0 0 138 135" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="68.5" cy="67.5" r="30.5" fill="white"/>
+                <path d="M6.00009 48.5V26.5C5.83342 19.5 9.80009 5.5 27.0001 5.5H43.0001" stroke="white" stroke-width="10" stroke-linecap="round"/>
+                <path d="M132 85L132 107C132.167 114 128.2 128 111 128L94.9999 128" stroke="white" stroke-width="10" stroke-linecap="round"/>
+                <path d="M90 6.00537L112 6.00537C119 5.82521 133 10.1129 133 28.705L133 46" stroke="white" stroke-width="10" stroke-linecap="round"/>
+                <path d="M48 129.495L26 129.495C19 129.675 5 125.387 5 106.795L5.00001 89.5" stroke="white" stroke-width="10" stroke-linecap="round"/>
+            </svg>
+            <svg id="icon-pause" class="top-icon" style="display: none" width="14vh" height="14vh" viewBox="0 0 172 172" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M145.125 32.25V139.75C145.125 142.601 143.992 145.335 141.976 147.351C139.96 149.367 137.226 150.5 134.375 150.5H107.5C104.649 150.5 101.915 149.367 99.8986 147.351C97.8826 145.335 96.75 142.601 96.75 139.75V32.25C96.75 29.3989 97.8826 26.6646 99.8986 24.6486C101.915 22.6326 104.649 21.5 107.5 21.5H134.375C137.226 21.5 139.96 22.6326 141.976 24.6486C143.992 26.6646 145.125 29.3989 145.125 32.25ZM64.5 21.5H37.625C34.7739 21.5 32.0396 22.6326 30.0236 24.6486C28.0076 26.6646 26.875 29.3989 26.875 32.25V139.75C26.875 142.601 28.0076 145.335 30.0236 147.351C32.0396 149.367 34.7739 150.5 37.625 150.5H64.5C67.3511 150.5 70.0854 149.367 72.1014 147.351C74.1174 145.335 75.25 142.601 75.25 139.75V32.25C75.25 29.3989 74.1174 26.6646 72.1014 24.6486C70.0854 22.6326 67.3511 21.5 64.5 21.5Z" fill="white"/>
+            </svg>
+            <svg id="icon-square" class="top-icon" style="display: none" width="11vh" height="11vh" viewBox="0 0 138 138" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="138" height="138" fill="white"/>
+            </svg>
+            <!-- End Status icons -->
+
+            <p id="top-text">no connection</p>
+        </div>
+
+        <div id="middle-section">
+            <p id="clock-text" style="display: none;">12:07:08</p>
+            <p id="mini-text">Check OBS Websocket</p>
+            <button id="button-reload" onclick="reload()">Reload</button>
+        </div>
+
+        <div id="bottom-section" style="display: none;" >
+            <div id="bottom-right-section">
+                <div class="super-text">
+                    <p>Space</p>
+                    <svg width="4vw" height="4vw" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M63.6874 26.7813L59.8437 32.5625C61.6973 36.2596 62.6049 40.3589 62.4849 44.4929C62.3649 48.6269 61.2212 52.6666 59.1562 56.25H15.8437C13.1598 51.5941 12.0477 46.1973 12.6722 40.8596C13.2968 35.5219 15.6246 30.5276 19.3108 26.617C22.997 22.7064 27.8451 20.0876 33.1366 19.1491C38.4281 18.2105 43.8812 19.002 48.6874 21.4063L54.4687 17.5625C48.5827 13.7882 41.6009 12.0969 34.6402 12.7592C27.6795 13.4215 21.1419 16.3991 16.0733 21.2157C11.0047 26.0323 7.69793 32.4096 6.68186 39.3276C5.66578 46.2455 6.99915 53.3044 10.4687 59.375C11.014 60.3196 11.7971 61.1051 12.74 61.6533C13.683 62.2015 14.753 62.4934 15.8437 62.5H59.1249C60.2262 62.5044 61.3092 62.2177 62.264 61.6689C63.2189 61.1201 64.0118 60.3288 64.5624 59.375C67.4417 54.3873 68.8867 48.7009 68.7378 42.9436C68.5889 37.1864 66.8519 31.5823 63.7187 26.75L63.6874 26.7813ZM33.0937 48.1563C33.6741 48.7374 34.3634 49.1984 35.1222 49.5129C35.8809 49.8274 36.6942 49.9893 37.5156 49.9893C38.3369 49.9893 39.1502 49.8274 39.9089 49.5129C40.6677 49.1984 41.357 48.7374 41.9374 48.1563L59.6249 21.625L33.0937 39.3125C32.5126 39.893 32.0516 40.5823 31.7371 41.341C31.4225 42.0997 31.2606 42.913 31.2606 43.7344C31.2606 44.5557 31.4225 45.369 31.7371 46.1278C32.0516 46.8865 32.5126 47.5758 33.0937 48.1563Z" fill="#3B4151"/>
+                    </svg>
+
+                </div>
+                <p id="bottom-right-text">32.87 MBs</p>
+            </div>
+
+        </div>
+    </div>
+</body>
+<script src="./obs-websocket-js.js"></script>
+<script>
+    const obs = new OBSWebSocket();
+    let connected = false;
+
+    //page components
+    const topSection = document.getElementById('top-section');
+    const iconRecording = document.getElementById('icon-recording');
+    const iconPaused = document.getElementById('icon-pause');
+    const iconSquare = document.getElementById('icon-square');
+    const topText = document.getElementById('top-text');
+    const miniText = document.getElementById('mini-text');
+    const buttonReload = document.getElementById('button-reload');
+    const clockText = document.getElementById('clock-text');
+    const rightText = document.getElementById('bottom-right-text');
+    const bottomSection = document.getElementById('bottom-section');
+    const bottomRightSection = document.getElementById('bottom-right-section');
+
+    //change app color to light
+
+    const reload = function () {
+        location.reload();
+    }
+
+    const clearDisplay = function () {
+        bottomSection.style.display = 'none';
+        topSection.className = '';
+        iconRecording.style.display = 'none';
+        iconPaused.style.display = 'none';
+        iconSquare.style.display = 'none';
+        topText.innerHTML = 'no connection'
+        miniText.style.display = 'block';
+        clockText.style.display = 'none';
+        buttonReload.style.display = 'block';
+    };
+
+    const connectToWebsocket = function () {
+        (async () => {
+        try {
+            const {
+                obsWebSocketVersion,
+                negotiatedRpcVersion
+            } = await obs.connect('ws://127.0.0.1:' + obsPort, obsPassword, { eventSubscriptions: OBSWebSocket.EventSubscription.All | OBSWebSocket.EventSubscription.InputVolumeMeters });
+            connected = true;
+            console.log(`Connected to server ${obsWebSocketVersion} (using RPC ${negotiatedRpcVersion})`);
+        } catch (error) {
+            console.error('Failed to connect', error.code, error.message);
+        }
+
+        if (connected) {
+            buttonReload.style.display = 'none';
+            iconSquare.style.display = 'block';
+            iconPaused.style.display = 'none';
+            topText.innerText = 'no recording';
+            bottomSection.style.justifyContent = 'end'
+            bottomRightSection.style.width = '60vw';
+            miniText.style.display = 'none';
+            clockText.style.display = 'block';
+            clockText.innerHTML = '';
+            const intervalChecksR = setInterval(async () => {
+                try {
+                    const recordStatus = await obs.call('GetRecordStatus');
+                    console.log(recordStatus);
+                    if (recordStatus.outputActive) {
+                        bottomSection.style.display = 'flex';
+                        iconSquare.style.display = 'none';
+                        if (recordStatus.outputPaused) {
+                            iconRecording.style.display = 'none';
+                            iconPaused.style.display = 'block';
+                            topText.innerText = 'recording paused';
+                            topSection.className = 'gold';
+                        } else {
+                            iconRecording.style.display = 'block';
+                            iconPaused.style.display = 'none';
+                            topText.innerText = 'recording';
+                            topSection.className = 'red';
+                        }
+                        clockText.innerHTML = recordStatus.outputTimecode.split('.')[0];
+                        let mbsRecord = Math.round(recordStatus.outputBytes * 0.0001) / 100;
+                        rightText.innerHTML = mbsRecord + ' MBs'
+                    } else {
+                        iconPaused.style.display = 'none';
+                        iconRecording.style.display = 'none';
+                        iconSquare.style.display = 'block';
+                        topText.innerText = 'no recording';
+                        topSection.className = '';
+                    }
+                } catch(error) {
+                    clearDisplay();
+                    console.error('Failed to connect', error.code, error.message)
+                    clearInterval(intervalChecksR);
+                }
+
+            }, timeUpdate);
+
+        }
+
+    })()
+    }
+
+    connectToWebsocket();
+
+</script>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBS Status Source - Audio Light</title>
+</head>
+<script>
+    /* add your configuration here */
+    const obsPort = 4455;
+    const obsPassword = '';
+    const timeUpdate = 1000;
+</script>
+<style>
+    * {
+        font-family: "Montserrat", Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    #base {
+        background-color: #fff;
+        display: block;
+        height: 100vh;
+        width: 100vw;
+        box-sizing: border-box;
+    }
+
+    #top-section {
+        align-items: center;
+        color: #3B4151;
+        display: flex;
+        flex-direction: row;
+        font-size: 10vh;
+        font-weight: 700;
+        gap: 3vw;
+        height: 24vh;
+        justify-content: center;
+        text-transform: uppercase;
+        width: 100%;
+    }
+
+    #top-section.grey {
+        color: #fff;
+        background-color: #92908F;
+        background: radial-gradient(ellipse at center,  #92908F 0%,#585757 100%);
+    }
+
+    #middle-section {
+        align-items: center;
+        box-sizing: border-box;
+        color: #3B4151;
+        display: flex;
+        flex-direction: column;
+        font-size: 24vh;
+        font-weight: 600;
+        height: 44vh;
+        justify-content: center;
+        letter-spacing: 10px;
+        padding: 80px;
+        width: 100%;
+    }
+
+    #button-reload {
+        background-color: rgb(68, 63, 68);
+        border: none;
+        padding: 2vh 4vh;
+        font-size: 4vh;
+        border-radius: 1vh;
+        transition: all 0.3s;
+    }
+
+    #button-reload:hover {
+        background-color: rgb(189, 185, 189);
+        cursor: pointer;
+    }
+
+    #middle-section #mini-text{
+        font-size: 9vh !important;
+        text-align: center;
+    }
+
+    #bottom-section {
+        align-items: center;
+        box-sizing: border-box;
+        color: #3B4151;
+        display: flex;
+        flex-direction: row;
+        font-size: 7vw;
+        font-weight: 600;
+        height: 30vh;
+        justify-content: space-around;
+        text-transform: none;
+        width: 100%;
+    }
+
+    .gauge {
+        width: 40vw;
+        height: 20vw;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .inner {
+        width: 40vw;
+        height: 20vw;
+        display: block;
+        background-color: red;
+        border-radius: 40vw 40vw 0 0;
+        z-index:1;
+        overflow: hidden;
+    }
+    .inner:after {
+        content: ' ';
+        width: 20vw;
+        height: 12vw;
+        top: 10vw;
+        display: block;
+        left: 10vw;
+        background-color: #fff;
+        border-radius: 40vw 40vw 0 0;
+        position: absolute;
+        z-index: 3;
+    }
+
+
+    .spinner {
+    width: 40.1vw;
+    height: 20vw;
+    background-color: rgba(256,256,256, 0.6);
+    position: absolute;
+    z-index: 2;
+    transform-origin: top center;
+
+    transition: transform 300ms ease;
+    transform: translateZ(0);
+    transform: rotate(-180deg);
+    border-radius: 0 0 40vw 40vw;
+    }
+
+    .gauge-cont {
+    display: inline-block;
+    position: relative;
+    width: 40vw;
+    height: 20vw;
+    margin-left: 30px;
+
+    }
+    .gauge-cont:first-child{
+        margin: 0;
+    }
+
+    .pointer {
+    display: block;
+    width: 1vw;
+    height: 18vw;
+    background-color: #3B4151;
+    border-radius: 4px 4px 0 0;
+    position: absolute;
+    z-index: 4;
+    bottom: 0px;
+    left: 20vw;
+    transform: rotate(-90deg);
+    transform-origin: center bottom;
+    transition: transform 300ms ease;
+    }
+
+    .pointer-knob {
+    width: 3vw;
+    height: 3vw;
+    background-color: #3B4151;
+    position: absolute;
+    left: 19vw;
+    bottom: -2vw;
+    z-index: 5;
+    border-radius: 2vw;
+    }
+
+</style>
+<body>
+    <div id="base" >
+        <div id="top-section" class="grey">
+            <!-- Status icons -->
+            <svg id="icon-speaker" class="top-icon" style="display: none" width="11vh" height="11vh" viewBox="0 0 324 324" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M229.5 297H94.5C87.075 297 80.721 294.359 75.438 289.076C70.155 283.793 67.509 277.434 67.5 270V54C67.5 46.575 70.146 40.221 75.438 34.938C80.73 29.655 87.084 27.009 94.5 27H229.5C236.925 27 243.284 29.646 248.576 34.938C253.868 40.23 256.509 46.584 256.5 54V270C256.5 277.425 253.859 283.784 248.576 289.076C243.293 294.368 236.934 297.009 229.5 297ZM229.5 270V54H94.5V270H229.5ZM162 121.5C169.425 121.5 175.784 118.859 181.076 113.576C186.368 108.293 189.009 101.934 189 94.5C188.991 87.066 186.35 80.712 181.076 75.438C175.802 70.164 169.443 67.518 162 67.5C154.557 67.482 148.203 70.128 142.938 75.438C137.673 80.748 135.027 87.102 135 94.5C134.973 101.898 137.619 108.257 142.938 113.576C148.257 118.895 154.611 121.536 162 121.5ZM162 256.5C176.85 256.5 189.562 251.213 200.137 240.638C210.712 230.063 216 217.35 216 202.5C216 187.65 210.712 174.938 200.137 164.363C189.562 153.788 176.85 148.5 162 148.5C147.15 148.5 134.438 153.788 123.863 164.363C113.288 174.938 108 187.65 108 202.5C108 217.35 113.288 230.063 123.863 240.638C134.438 251.213 147.15 256.5 162 256.5ZM162 229.5C154.575 229.5 148.221 226.859 142.938 221.576C137.655 216.293 135.009 209.934 135 202.5C134.991 195.066 137.637 188.712 142.938 183.438C148.239 178.164 154.593 175.518 162 175.5C169.407 175.482 175.766 178.128 181.076 183.438C186.386 188.748 189.027 195.102 189 202.5C188.973 209.898 186.332 216.257 181.076 221.576C175.82 226.895 169.461 229.536 162 229.5Z" fill="#3B4151 "/>
+            </svg>
+
+            <!-- End Status icons -->
+
+            <p id="top-text">no connection</p>
+        </div>
+
+        <div id="middle-section">
+            <p id="mini-text">Check OBS Websocket</p>
+            <button id="button-reload" onclick="reload()">Reload</button>
+            <div id="spinners-container" style="display: none;">
+                <div class="gauge-cont">
+                    <div class="gauge">
+                        <div class="inner">
+                            <svg width="40vw" height="20vw" viewBox="0 0 2000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g clip-path="url(#clip0_25_9)">
+                                <rect width="2000" height="1000" fill="white"/>
+                                <rect y="-32" width="2000" height="1033" fill="#E74645"/>
+                                <path d="M0 1001V-32H2000V613.005L1040.18 1001H0Z" fill="#FACD60"/>
+                                <path d="M1022.38 1001L1585.18 190.674L1744 -31H0V1001H1022.38Z" fill="#58B368"/>
+                                </g>
+                                <defs>
+                                <clipPath id="clip0_25_9">
+                                <rect width="2000" height="1000" fill="white"/>
+                                </clipPath>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div id="spinner-l" class="spinner"></div>
+                    </div>
+                    <div id="pointer-l" class="pointer"></div>
+                    <div class="pointer-knob"></div>
+                </div>
+                <div class="gauge-cont">
+                    <div class="gauge">
+                        <div class="inner">
+                            <svg width="40vw" height="20vw" viewBox="0 0 2000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g clip-path="url(#clip0_25_9)">
+                                <rect width="2000" height="1000" fill="white"/>
+                                <rect y="-32" width="2000" height="1033" fill="#E74645"/>
+                                <path d="M0 1001V-32H2000V613.005L1040.18 1001H0Z" fill="#FACD60"/>
+                                <path d="M1022.38 1001L1585.18 190.674L1744 -31H0V1001H1022.38Z" fill="#58B368"/>
+                                </g>
+                                <defs>
+                                <clipPath id="clip0_25_9">
+                                <rect width="2000" height="1000" fill="white"/>
+                                </clipPath>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div id="spinner-r" class="spinner"></div>
+                    </div>
+                    <div id="pointer-r" class="pointer"></div>
+                    <div class="pointer-knob"></div>
+                </div>
+            </div>
+        </div>
+        <div id="bottom-section" style="display: none;" >
+            <p style="padding-left: 8vw;">L</p>
+            <p style="padding-right: 7vw;">R</p>
+        </div>
+    </div>
+</body>
+<script src="./obs-websocket-js.js"></script>
+<script>
+    const obs = new OBSWebSocket();
+    let connected = false;
+
+
+    //page components
+    const topSection = document.getElementById('top-section');
+    const topText = document.getElementById('top-text');
+    const iconSpeaker = document.getElementById('icon-speaker');
+    const miniText = document.getElementById('mini-text');
+    const buttonReload = document.getElementById('button-reload');
+    const clockText = document.getElementById('clock-text');
+    const leftText = document.getElementById('bottom-left-text');
+    const rightText = document.getElementById('bottom-right-text');
+    const bottomSection = document.getElementById('bottom-section');
+    const spinnerSection = document.getElementById('spinners-container');
+    const spinnerL = document.getElementById('spinner-l');
+    const spinnerR = document.getElementById('spinner-r');
+    const pointerL = document.getElementById('pointer-l');
+    const pointerR = document.getElementById('pointer-r');
+
+    const reload = function () {
+        location.reload();
+    }
+
+    const clearDisplay = function () {
+        bottomSection.style.display = 'none';
+        spinnerSection.style.display = 'none';
+        topSection.className = 'grey';
+        topText.innerHTML = 'no connection'
+        miniText.style.display = 'block';
+        buttonReload.style.display = 'block';
+        iconSpeaker.style.display = 'none';
+    };
+
+    const getPercent = function(level) {
+        let percent = 0;
+        if (level < 101) {
+            percent = (level * 80) / 100;
+        }
+        if (level > 100 && level < 301) {
+            percent = (((level - 100) * 10) / 200) + 80;
+        }
+        if (level > 300) {
+            percent = (((level - 300) * 10) / 700) + 90;
+        }
+        return percent
+    }
+
+    const connectToWebsocket = function () {
+        (async () => {
+        try {
+            const {
+                obsWebSocketVersion,
+                negotiatedRpcVersion
+            } = await obs.connect('ws://127.0.0.1:' + obsPort, obsPassword, { eventSubscriptions: OBSWebSocket.EventSubscription.All | OBSWebSocket.EventSubscription.InputVolumeMeters });
+            connected = true;
+            console.log(`Connected to server ${obsWebSocketVersion} (using RPC ${negotiatedRpcVersion})`);
+        } catch (error) {
+            console.error('Failed to connect', error.code, error.message);
+        }
+
+        if (connected) {
+            iconSpeaker.style.display = 'block';
+            spinnerSection.style.display = 'flex';
+            bottomSection.style.display = 'flex';
+            buttonReload.style.display = 'none';
+            topText.innerText = 'audio';
+            topSection.className = '';
+            miniText.style.display = 'none';
+            obs.on('InputVolumeMeters', function(res) {
+                const niveles = [0, 0]
+                for (const inp of res.inputs) {
+                    if (inp.inputLevelsMul.length > 0) {
+                        const izq = Math.round(inp.inputLevelsMul[0][1] * 1000);
+                        const der = Math.round(inp.inputLevelsMul[1][1] * 1000);
+                        if (izq > niveles[1]) {
+                            niveles[0] = izq;
+                        }
+                        if (der > niveles[1]) {
+                            niveles[1] = der;
+                        }
+                    }
+
+                }
+                const percentL = getPercent(niveles[0]);
+                const percentR = getPercent(niveles[1]);
+                const degreesL = (180 -(180 * (Math.round(percentL) / 100))) * -1  ;
+                const degreesR = (180 -(180 * (Math.round(percentR) / 100))) * -1  ;
+                const pointerDegreesL = (180 * (Math.round(percentL) / 100)) - 90;
+                const pointerDegreesR = (180 * (Math.round(percentR) / 100)) - 90;
+                spinnerL.style.transform = 'rotate(' + Math.round(degreesL) + 'deg)';
+                spinnerR.style.transform = 'rotate(' + Math.round(degreesR) + 'deg)';
+                pointerL.style.transform = 'rotate(' + Math.round(pointerDegreesL) + 'deg)';
+                pointerR.style.transform = 'rotate(' + Math.round(pointerDegreesR) + 'deg)';
+            });
+        }
+
+    })()
+    }
+
+    connectToWebsocket();
+
+</script>
+</html>
